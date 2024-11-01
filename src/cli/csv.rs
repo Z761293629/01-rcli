@@ -1,41 +1,6 @@
-use clap::{Args, Parser, Subcommand};
+use clap::Args;
 use core::fmt;
 use std::{path::Path, str::FromStr};
-
-#[derive(Debug, Parser)]
-#[command(name="rcli",version, about, long_about = None)]
-#[command(propagate_version = true)]
-pub struct Cli {
-    #[command(subcommand)]
-    pub command: SubCommands,
-}
-
-#[derive(Debug, Subcommand)]
-pub enum SubCommands {
-    #[command(name = "csv", about = "Show CSV, or convert CSV to other formats")]
-    Csv(CsvArgs),
-
-    #[command(name = "genpass", about = "Generate password")]
-    GenPass(GenPassArgs),
-}
-
-#[derive(Debug, Args)]
-pub struct GenPassArgs {
-    #[arg(short, long, default_value_t = 8)]
-    pub len: u8,
-
-    #[arg(long, default_value_t = false)]
-    pub no_upper: bool,
-
-    #[arg(long, default_value_t = false)]
-    pub no_lower: bool,
-
-    #[arg(long, default_value_t = false)]
-    pub no_number: bool,
-
-    #[arg(long, default_value_t = false)]
-    pub no_symbol: bool,
-}
 
 #[derive(Debug, Args)]
 pub struct CsvArgs {
