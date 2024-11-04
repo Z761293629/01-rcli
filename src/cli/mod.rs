@@ -1,12 +1,14 @@
 pub mod base64;
 pub mod csv;
 pub mod genpass;
+pub mod text;
 
 pub use base64::Base64SubCommands;
 use clap::{Parser, Subcommand};
 use csv::CsvArgs;
 use genpass::GenPassArgs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use text::TextSubCommands;
 
 #[derive(Debug, Parser)]
 #[command(name="rcli",version, about, long_about = None)]
@@ -26,6 +28,9 @@ pub enum SubCommands {
 
     #[command(subcommand, about = "Base64 encode or decode")]
     Base64(Base64SubCommands),
+
+    #[command(subcommand, about = "Sign or verify text")]
+    Text(TextSubCommands),
 }
 
 fn verify_file(filename: &str) -> Result<String, &'static str> {
@@ -33,6 +38,15 @@ fn verify_file(filename: &str) -> Result<String, &'static str> {
         Ok(filename.into())
     } else {
         Err("File does not exist")
+    }
+}
+
+fn verify_path(path: &str) -> Result<PathBuf, &'static str> {
+    let p = Path::new(path);
+    if p.exists() && p.is_dir() {
+        Ok(path.into())
+    } else {
+        Err("directory does not exist")
     }
 }
 
