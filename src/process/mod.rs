@@ -1,5 +1,7 @@
-mod csv_convert;
-mod genpass;
+pub mod base64;
+pub mod csv_convert;
+pub mod genpass;
 
+pub use base64::*;
 pub use csv_convert::*;
 pub use genpass::*;

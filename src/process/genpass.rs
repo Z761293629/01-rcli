@@ -12,7 +12,7 @@ pub fn genpass(
     no_lower: bool,
     no_number: bool,
     no_symbol: bool,
-) -> Result<()> {
+) -> Result<String> {
     let mut chars = Vec::new();
     let mut password = Vec::new();
     let mut rng = rand::thread_rng();
@@ -49,5 +49,26 @@ pub fn genpass(
     println!("{}", &password);
     eprintln!("score : {}", zxcvbn::zxcvbn(&password, &[]).score());
 
-    Ok(())
+    Ok(password)
+}
+
+#[cfg(test)]
+mod tests {
+
+    use super::*;
+
+    #[test]
+    fn test_genpass() {
+        let len = 16;
+        let no_upper = false;
+        let no_lower = false;
+        let no_number = false;
+        let no_symbol = false;
+
+        let password = genpass(len, no_upper, no_lower, no_number, no_symbol);
+
+        assert!(password.is_ok());
+        let password = password.unwrap();
+        assert_eq!(password.len() as u8, len);
+    }
 }

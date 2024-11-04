@@ -1,6 +1,7 @@
+use super::verify_file;
 use clap::Args;
 use core::fmt;
-use std::{path::Path, str::FromStr};
+use std::str::FromStr;
 
 #[derive(Debug, Args)]
 pub struct CsvArgs {
@@ -53,13 +54,5 @@ impl FromStr for OutputFormat {
             "yaml" => Ok(OutputFormat::YAML),
             _ => Err(anyhow::anyhow!("Invalid format!")),
         }
-    }
-}
-
-fn verify_file(filename: &str) -> Result<String, &'static str> {
-    if Path::new(filename).exists() {
-        Ok(filename.into())
-    } else {
-        Err("File does not exist")
     }
 }
