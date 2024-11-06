@@ -15,6 +15,30 @@ pub enum TextSubCommands {
 
     #[command(name = "generate")]
     KeyGenerate(KeyGenerateArgs),
+
+    #[command(name = "encrypt")]
+    TextEncrypt(TextEncryptArgs),
+
+    #[command(name = "decrypt")]
+    TextDecrypt(TextDecryptArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct TextDecryptArgs {
+    #[arg(long)]
+    pub key: String,
+
+    #[arg(long,value_parser=verify_file,default_value="-")]
+    pub input: String,
+}
+
+#[derive(Debug, Args)]
+pub struct TextEncryptArgs {
+    #[arg(long)]
+    pub key: String,
+
+    #[arg(long,value_parser=verify_file,default_value="-")]
+    pub input: String,
 }
 
 #[derive(Debug, Args)]

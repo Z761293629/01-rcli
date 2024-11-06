@@ -1,3 +1,7 @@
+use chacha20poly1305::{
+    aead::{self, Aead, AeadCore, KeyInit},
+    ChaCha20Poly1305, Key, Nonce,
+};
 use ed25519_dalek::Signature;
 use ed25519_dalek::SigningKey;
 use ed25519_dalek::{ed25519::signature::Signer, VerifyingKey};
@@ -134,6 +138,41 @@ pub fn key_generate(format: TextSignFormat) -> anyhow::Result<HashMap<&'static s
     }
 }
 
+pub fn encrypt_text(reader: &mut dyn Read, key: impl AsRef<[u8]>) -> anyhow::Result<Vec<u8>> {
+    let mut content = Vec::new();
+    reader.read_to_end(&mut content)?;
+    let key = Key::from_slice(key.as_ref());
+    let cipher = ChaCha20Poly1305::new(key);
+    // 96-bits; unique per message
+    let nonce = ChaCha20Poly1305::generate_nonce(&mut aead::OsRng);
+    let ciphertext = cipher.encrypt(&nonce, content.as_ref());
+
+    match ciphertext {
+        Ok(mut v) => {
+            let mut nonce = nonce.to_vec();
+            nonce.append(&mut v);
+            Ok(nonce)
+        }
+        Err(e) => Err(anyhow::anyhow!(format!("encrypt error {:?}", e))),
+    }
+}
+
+const NONCE_LEN: usize = 12;
+
+pub fn decrypt_text(reader: &mut dyn Read, key: impl AsRef<[u8]>) -> anyhow::Result<Vec<u8>> {
+    let mut content = Vec::new();
+    reader.read_to_end(&mut content)?;
+    let key = Key::from_slice(key.as_ref());
+    let cipher = ChaCha20Poly1305::new(key);
+
+    let nonce = Nonce::from_slice(&content[0..NONCE_LEN]);
+    let plaint = cipher.decrypt(nonce, &content[NONCE_LEN..]);
+    match plaint {
+        Ok(plaint) => Ok(plaint),
+        Err(e) => Err(anyhow::anyhow!(format!("decrypt error {:?}", e))),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -167,6 +206,16 @@ mod tests {
         let verifyer = Ed25519Verifyer::try_new(verifying_key)?;
         let r = verifyer.verify(&mut "hello".as_bytes(), &sig)?;
         assert!(r);
+        Ok(())
+    }
+
+    #[test]
+    fn test_chacha20() -> anyhow::Result<()> {
+        let key = b"yXHLHs9WcdpkTV8elon1XgoGtdy5anJR";
+        let encrypt = encrypt_text(&mut "hello world".as_bytes(), key)?;
+        let mut cursor = std::io::Cursor::new(&encrypt);
+        let r = decrypt_text(&mut cursor, key)?;
+        assert_eq!(String::from_utf8(r)?, "hello world");
         Ok(())
     }
 }

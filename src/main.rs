@@ -1,10 +1,11 @@
 use std::fs;
+use std::io::Cursor;
 
 use base64::prelude::*;
 use clap::Parser;
 use rcli::cli::text::TextSubCommands;
 use rcli::cli::{Base64SubCommands, Cli, SubCommands};
-use rcli::process::text::{key_generate, sign_text, verify_text};
+use rcli::process::text::{decrypt_text, encrypt_text, key_generate, sign_text, verify_text};
 use rcli::process::{base64_decode, base64_encode, genpass, process_csv};
 use rcli::utils::{get_content, get_reader};
 
@@ -60,6 +61,18 @@ fn main() -> anyhow::Result<()> {
                 for (k, v) in keys {
                     fs::write(args.output.join(k), v)?;
                 }
+            }
+            TextSubCommands::TextEncrypt(args) => {
+                let mut reader = get_reader(&args.input)?;
+                let encrypt = encrypt_text(&mut reader, &args.key)?;
+                let encrtpt = BASE64_URL_SAFE_NO_PAD.encode(encrypt);
+                println!("{}", encrtpt);
+            }
+            TextSubCommands::TextDecrypt(args) => {
+                let content = get_content(&args.input)?;
+                let content = BASE64_URL_SAFE_NO_PAD.decode(content)?;
+                let plain = decrypt_text(&mut Cursor::new(&content), &args.key)?;
+                println!("{}", String::from_utf8(plain)?);
             }
         },
     };
