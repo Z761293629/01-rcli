@@ -3,13 +3,18 @@ use std::io::Cursor;
 
 use base64::prelude::*;
 use clap::Parser;
+use rcli::cli::http::HttpSubCommands;
 use rcli::cli::text::TextSubCommands;
 use rcli::cli::{Base64SubCommands, Cli, SubCommands};
+use rcli::process::http::http_serve;
 use rcli::process::text::{decrypt_text, encrypt_text, key_generate, sign_text, verify_text};
 use rcli::process::{base64_decode, base64_encode, genpass, process_csv};
 use rcli::utils::{get_content, get_reader};
 
-fn main() -> anyhow::Result<()> {
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    tracing_subscriber::fmt::init();
+
     let cli = Cli::parse();
     match cli.command {
         SubCommands::Csv(args) => {
@@ -74,6 +79,9 @@ fn main() -> anyhow::Result<()> {
                 let plain = decrypt_text(&mut Cursor::new(&content), &args.key)?;
                 println!("{}", String::from_utf8(plain)?);
             }
+        },
+        SubCommands::Http(cmd) => match cmd {
+            HttpSubCommands::Serve(args) => http_serve(args.directory, args.port).await?,
         },
     };
     Ok(())

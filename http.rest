@@ -1,0 +1,3 @@
+### index page
+
+GET http://localhost:8080/tower/fixtures/ed25519.pk
