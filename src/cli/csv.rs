@@ -1,3 +1,6 @@
+use crate::process::process_csv;
+use crate::CmdExecutor;
+
 use super::verify_file;
 use clap::{Args, ValueEnum};
 use core::fmt;
@@ -19,6 +22,18 @@ pub struct CsvArgs {
 
     #[arg(long, default_value_t = true)]
     pub header: bool,
+}
+
+impl CmdExecutor for CsvArgs {
+    async fn execute(self) -> anyhow::Result<()> {
+        let output = if let Some(output) = self.output {
+            output.clone()
+        } else {
+            format!("output.{}", self.format)
+        };
+        process_csv(&self.input, &output, self.format)?;
+        Ok(())
+    }
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]

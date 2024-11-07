@@ -45,11 +45,7 @@ pub fn genpass(
         password.push(c);
     }
     password.shuffle(&mut rng);
-    let password = String::from_utf8(password)?;
-    println!("{}", &password);
-    eprintln!("score : {}", zxcvbn::zxcvbn(&password, &[]).score());
-
-    Ok(password)
+    Ok(String::from_utf8(password)?)
 }
 
 #[cfg(test)]

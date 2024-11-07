@@ -1,6 +1,14 @@
+use crate::{
+    process::text::{decrypt_text, encrypt_text, key_generate, sign_text, verify_text},
+    utils::{get_content, get_reader},
+    CmdExecutor,
+};
+
 use super::{verify_file, verify_path};
+use base64::prelude::*;
 use clap::{Args, Subcommand, ValueEnum};
-use std::{path::PathBuf, str::FromStr};
+use std::{io::Cursor, path::PathBuf, str::FromStr};
+use tokio::fs;
 
 #[derive(Debug, Subcommand)]
 pub enum TextSubCommands {
@@ -23,6 +31,18 @@ pub enum TextSubCommands {
     TextDecrypt(TextDecryptArgs),
 }
 
+impl CmdExecutor for TextSubCommands {
+    async fn execute(self) -> anyhow::Result<()> {
+        match self {
+            TextSubCommands::TextSign(args) => args.execute().await,
+            TextSubCommands::TextVerify(args) => args.execute().await,
+            TextSubCommands::KeyGenerate(args) => args.execute().await,
+            TextSubCommands::TextEncrypt(args) => args.execute().await,
+            TextSubCommands::TextDecrypt(args) => args.execute().await,
+        }
+    }
+}
+
 #[derive(Debug, Args)]
 pub struct TextDecryptArgs {
     #[arg(long)]
@@ -30,6 +50,16 @@ pub struct TextDecryptArgs {
 
     #[arg(long,value_parser=verify_file,default_value="-")]
     pub input: String,
+}
+
+impl CmdExecutor for TextDecryptArgs {
+    async fn execute(self) -> anyhow::Result<()> {
+        let content = get_content(&self.input)?;
+        let content = BASE64_URL_SAFE_NO_PAD.decode(content)?;
+        let plain = decrypt_text(&mut Cursor::new(&content), &self.key)?;
+        println!("{}", String::from_utf8(plain)?);
+        Ok(())
+    }
 }
 
 #[derive(Debug, Args)]
@@ -41,6 +71,16 @@ pub struct TextEncryptArgs {
     pub input: String,
 }
 
+impl CmdExecutor for TextEncryptArgs {
+    async fn execute(self) -> anyhow::Result<()> {
+        let mut reader = get_reader(&self.input)?;
+        let encrypt = encrypt_text(&mut reader, &self.key)?;
+        let encrtpt = BASE64_URL_SAFE_NO_PAD.encode(encrypt);
+        println!("{}", encrtpt);
+        Ok(())
+    }
+}
+
 #[derive(Debug, Args)]
 pub struct KeyGenerateArgs {
     #[arg(long, value_enum,default_value_t=TextSignFormat::Blake3)]
@@ -48,6 +88,16 @@ pub struct KeyGenerateArgs {
 
     #[arg(long,value_parser=verify_path)]
     pub output: PathBuf,
+}
+
+impl CmdExecutor for KeyGenerateArgs {
+    async fn execute(self) -> anyhow::Result<()> {
+        let keys = key_generate(self.format)?;
+        for (k, v) in keys {
+            fs::write(self.output.join(k), v).await?;
+        }
+        Ok(())
+    }
 }
 
 #[derive(Debug, Args)]
@@ -65,6 +115,17 @@ pub struct TextVerifyArgs {
     pub format: TextSignFormat,
 }
 
+impl CmdExecutor for TextVerifyArgs {
+    async fn execute(self) -> anyhow::Result<()> {
+        let mut input = get_reader(&self.input)?;
+        let sig = BASE64_URL_SAFE_NO_PAD.decode(&self.sig)?;
+        let key = get_content(&self.key)?;
+        let r = verify_text(&mut input, &key, &sig, self.format)?;
+        println!("{}", r);
+        Ok(())
+    }
+}
+
 #[derive(Debug, Args)]
 pub struct TextSignArgs {
     #[arg(long,value_parser=verify_file,default_value="-")]
@@ -75,6 +136,16 @@ pub struct TextSignArgs {
 
     #[arg(long, value_enum,default_value_t=TextSignFormat::Blake3)]
     pub format: TextSignFormat,
+}
+impl CmdExecutor for TextSignArgs {
+    async fn execute(self) -> anyhow::Result<()> {
+        let mut input = get_reader(&self.input)?;
+        let key = get_content(&self.key)?;
+        let sig = sign_text(&mut input, &key, self.format)?;
+        let encoded = BASE64_URL_SAFE_NO_PAD.encode(sig);
+        println!("{}", encoded);
+        Ok(())
+    }
 }
 
 #[derive(Debug, Clone, ValueEnum)]

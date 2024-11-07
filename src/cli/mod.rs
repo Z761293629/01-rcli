@@ -12,6 +12,8 @@ use http::HttpSubCommands;
 use std::path::{Path, PathBuf};
 use text::TextSubCommands;
 
+use crate::CmdExecutor;
+
 #[derive(Debug, Parser)]
 #[command(name="rcli",version, about, long_about = None)]
 #[command(propagate_version = true)]
@@ -36,6 +38,18 @@ pub enum SubCommands {
 
     #[command(subcommand)]
     Http(HttpSubCommands),
+}
+
+impl CmdExecutor for SubCommands {
+    async fn execute(self) -> anyhow::Result<()> {
+        match self {
+            SubCommands::Csv(args) => args.execute().await,
+            SubCommands::GenPass(args) => args.execute().await,
+            SubCommands::Base64(cmd) => cmd.execute().await,
+            SubCommands::Text(cmd) => cmd.execute().await,
+            SubCommands::Http(cmd) => cmd.execute().await,
+        }
+    }
 }
 
 fn verify_file(filename: &str) -> Result<String, &'static str> {

@@ -1,5 +1,11 @@
 use std::str::FromStr;
 
+use crate::{
+    process::{base64_decode, base64_encode},
+    utils::get_reader,
+    CmdExecutor,
+};
+
 use super::verify_file;
 use clap::{Args, Subcommand, ValueEnum};
 
@@ -12,6 +18,15 @@ pub enum Base64SubCommands {
     Base64Decode(Base64DecodeArgs),
 }
 
+impl CmdExecutor for Base64SubCommands {
+    async fn execute(self) -> anyhow::Result<()> {
+        match self {
+            Base64SubCommands::Base64Encode(args) => args.execute().await,
+            Base64SubCommands::Base64Decode(args) => args.execute().await,
+        }
+    }
+}
+
 #[derive(Debug, Args)]
 pub struct Base64EncodeArgs {
     #[arg(long,value_parser=verify_file,help="Input file")]
@@ -21,6 +36,15 @@ pub struct Base64EncodeArgs {
     pub format: Base64Format,
 }
 
+impl CmdExecutor for Base64EncodeArgs {
+    async fn execute(self) -> anyhow::Result<()> {
+        let mut input = get_reader(&self.input)?;
+        let encoded = base64_encode(&mut input, self.format)?;
+        println!("{}", encoded);
+        Ok(())
+    }
+}
+
 #[derive(Debug, Args)]
 pub struct Base64DecodeArgs {
     #[arg(long,value_parser=verify_file,help="Input file")]
@@ -28,6 +52,15 @@ pub struct Base64DecodeArgs {
 
     #[arg(long,value_enum,default_value_t=Base64Format::Stand)]
     pub format: Base64Format,
+}
+
+impl CmdExecutor for Base64DecodeArgs {
+    async fn execute(self) -> anyhow::Result<()> {
+        let mut input = get_reader(&self.input)?;
+        let decoded = base64_decode(&mut input, self.format)?;
+        println!("{}", decoded);
+        Ok(())
+    }
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
