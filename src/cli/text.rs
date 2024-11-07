@@ -1,5 +1,5 @@
 use super::{verify_file, verify_path};
-use clap::{Args, Subcommand};
+use clap::{Args, Subcommand, ValueEnum};
 use std::{path::PathBuf, str::FromStr};
 
 #[derive(Debug, Subcommand)]
@@ -43,7 +43,7 @@ pub struct TextEncryptArgs {
 
 #[derive(Debug, Args)]
 pub struct KeyGenerateArgs {
-    #[arg(long, default_value = "blake3")]
+    #[arg(long, value_enum,default_value_t=TextSignFormat::Blake3)]
     pub format: TextSignFormat,
 
     #[arg(long,value_parser=verify_path)]
@@ -61,7 +61,7 @@ pub struct TextVerifyArgs {
     #[arg(long)]
     pub sig: String,
 
-    #[arg(long, value_parser=parse_text_sign_format,default_value = "blake3")]
+    #[arg(long, value_enum,default_value_t=TextSignFormat::Blake3)]
     pub format: TextSignFormat,
 }
 
@@ -73,18 +73,14 @@ pub struct TextSignArgs {
     #[arg(long,value_parser=verify_file)]
     pub key: String,
 
-    #[arg(long, value_parser=parse_text_sign_format,default_value = "blake3")]
+    #[arg(long, value_enum,default_value_t=TextSignFormat::Blake3)]
     pub format: TextSignFormat,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, ValueEnum)]
 pub enum TextSignFormat {
     Blake3,
     Ed25519,
-}
-
-fn parse_text_sign_format(s: &str) -> Result<TextSignFormat, anyhow::Error> {
-    s.parse()
 }
 
 impl FromStr for TextSignFormat {

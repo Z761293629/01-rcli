@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 use super::verify_file;
-use clap::{Args, Subcommand};
+use clap::{Args, Subcommand, ValueEnum};
 
 #[derive(Debug, Subcommand)]
 pub enum Base64SubCommands {
@@ -17,7 +17,7 @@ pub struct Base64EncodeArgs {
     #[arg(long,value_parser=verify_file,help="Input file")]
     pub input: String,
 
-    #[arg(long,value_parser=parse_base64_format,default_value="stand",help="stand or urlsafe")]
+    #[arg(long,value_enum,default_value_t=Base64Format::Stand)]
     pub format: Base64Format,
 }
 
@@ -26,18 +26,14 @@ pub struct Base64DecodeArgs {
     #[arg(long,value_parser=verify_file,help="Input file")]
     pub input: String,
 
-    #[arg(long,value_parser=parse_base64_format,default_value="stand",help="stand or urlsafe")]
+    #[arg(long,value_enum,default_value_t=Base64Format::Stand)]
     pub format: Base64Format,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, ValueEnum)]
 pub enum Base64Format {
     Stand,
     UrlSafe,
-}
-
-fn parse_base64_format(s: &str) -> Result<Base64Format, anyhow::Error> {
-    s.parse()
 }
 
 impl FromStr for Base64Format {

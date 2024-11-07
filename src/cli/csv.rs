@@ -1,5 +1,5 @@
 use super::verify_file;
-use clap::Args;
+use clap::{Args, ValueEnum};
 use core::fmt;
 use std::str::FromStr;
 
@@ -11,7 +11,7 @@ pub struct CsvArgs {
     #[arg(short, long)]
     pub output: Option<String>,
 
-    #[arg(short,long,value_parser=parse_format,default_value = "json")]
+    #[arg(long,value_enum,default_value_t=OutputFormat::JSON)]
     pub format: OutputFormat,
 
     #[arg(short, long, default_value_t = ',')]
@@ -21,7 +21,7 @@ pub struct CsvArgs {
     pub header: bool,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, ValueEnum)]
 pub enum OutputFormat {
     JSON,
     YAML,
@@ -40,10 +40,6 @@ impl fmt::Display for OutputFormat {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", Into::<&str>::into(*self))
     }
-}
-
-fn parse_format(s: &str) -> Result<OutputFormat, anyhow::Error> {
-    s.parse()
 }
 
 impl FromStr for OutputFormat {
