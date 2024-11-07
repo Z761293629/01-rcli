@@ -7,10 +7,12 @@ use crate::{
 use super::{verify_file, verify_path};
 use base64::prelude::*;
 use clap::{Args, Subcommand, ValueEnum};
+use enum_dispatch::enum_dispatch;
 use std::{io::Cursor, path::PathBuf, str::FromStr};
 use tokio::fs;
 
 #[derive(Debug, Subcommand)]
+#[enum_dispatch(CmdExecutor)]
 pub enum TextSubCommands {
     #[command(
         name = "sign",
@@ -29,18 +31,6 @@ pub enum TextSubCommands {
 
     #[command(name = "decrypt")]
     TextDecrypt(TextDecryptArgs),
-}
-
-impl CmdExecutor for TextSubCommands {
-    async fn execute(self) -> anyhow::Result<()> {
-        match self {
-            TextSubCommands::TextSign(args) => args.execute().await,
-            TextSubCommands::TextVerify(args) => args.execute().await,
-            TextSubCommands::KeyGenerate(args) => args.execute().await,
-            TextSubCommands::TextEncrypt(args) => args.execute().await,
-            TextSubCommands::TextDecrypt(args) => args.execute().await,
-        }
-    }
 }
 
 #[derive(Debug, Args)]

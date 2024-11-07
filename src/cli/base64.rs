@@ -8,23 +8,16 @@ use crate::{
 
 use super::verify_file;
 use clap::{Args, Subcommand, ValueEnum};
+use enum_dispatch::enum_dispatch;
 
 #[derive(Debug, Subcommand)]
+#[enum_dispatch(CmdExecutor)]
 pub enum Base64SubCommands {
     #[command(name = "encode", about = "encode string to base64")]
     Base64Encode(Base64EncodeArgs),
 
     #[command(name = "decode", about = "decode base64 to string")]
     Base64Decode(Base64DecodeArgs),
-}
-
-impl CmdExecutor for Base64SubCommands {
-    async fn execute(self) -> anyhow::Result<()> {
-        match self {
-            Base64SubCommands::Base64Encode(args) => args.execute().await,
-            Base64SubCommands::Base64Decode(args) => args.execute().await,
-        }
-    }
 }
 
 #[derive(Debug, Args)]

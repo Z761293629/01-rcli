@@ -2,19 +2,13 @@ use crate::{process::http::http_serve, CmdExecutor};
 
 use super::verify_path;
 use clap::{Args, Subcommand};
+use enum_dispatch::enum_dispatch;
 use std::path::PathBuf;
 
 #[derive(Debug, Subcommand)]
+#[enum_dispatch(CmdExecutor)]
 pub enum HttpSubCommands {
     Serve(HttpServeArgs),
-}
-
-impl CmdExecutor for HttpSubCommands {
-    async fn execute(self) -> anyhow::Result<()> {
-        match self {
-            HttpSubCommands::Serve(args) => args.execute().await,
-        }
-    }
 }
 
 #[derive(Debug, Args)]
